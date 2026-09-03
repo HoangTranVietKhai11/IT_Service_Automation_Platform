@@ -119,6 +119,15 @@ IT-Service-Automation/
 |:---:|
 | ![Power BI Team Workload](screenshots/powerbi/03_team_workload.png) |
 
+### 3. Microsoft Power Automate — Cloud Automation Workflows
+| Danh sách luồng (My Flows) | Luồng Gửi Email Tức thì (Instant Flow) |
+|:---:|:---:|
+| ![My Flows List](screenshots/powerautomate/01_my_flows_list.png) | ![Instant Notification Flow](screenshots/powerautomate/02_instant_notification_flow.png) |
+
+| Luồng Phân tuyến & Tính SLA | Luồng Giám sát & Báo cáo CSAT |
+|:---:|:---:|
+| ![Auto-Triage Flow](screenshots/powerautomate/03_autotriage_sla_flow.png) | ![Resolution CSAT Flow](screenshots/powerautomate/05_resolution_csat_flow.png) |
+
 ---
 
 ## ⚡ Hướng dẫn chạy nhanh (Quick Start)
