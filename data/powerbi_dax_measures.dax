@@ -1,0 +1,124 @@
+// ===================================================================
+// POWER BI DAX MEASURES LIBRARY
+// Project: IT Service Request & Automation Platform (DKSH Project)
+// Table: _Measures
+// ===================================================================
+
+// -------------------------------------------------------------------
+// 1. CORE VOLUME METRICS
+// -------------------------------------------------------------------
+
+Total Tickets = 
+COUNTROWS(Fact_IT_Requests)
+
+Open Tickets = 
+CALCULATE(
+    [Total Tickets],
+    Fact_IT_Requests[Status] IN { "New", "Pending Approval", "Approved", "In Progress" }
+)
+
+Resolved Tickets = 
+CALCULATE(
+    [Total Tickets],
+    Fact_IT_Requests[Status] IN { "Resolved", "Closed" }
+)
+
+Rejected Tickets = 
+CALCULATE(
+    [Total Tickets],
+    Fact_IT_Requests[Status] = "Rejected"
+)
+
+Resolution Rate % = 
+DIVIDE([Resolved Tickets], [Total Tickets], 0)
+
+
+// -------------------------------------------------------------------
+// 2. SLA PERFORMANCE & ESCALATION METRICS
+// -------------------------------------------------------------------
+
+SLA Met Tickets = 
+CALCULATE(
+    [Total Tickets],
+    Fact_IT_Requests[Status] IN { "Resolved", "Closed" },
+    Fact_IT_Requests[ResolvedDate] <= Fact_IT_Requests[SLADeadline]
+)
+
+SLA Breached Tickets = 
+CALCULATE(
+    [Total Tickets],
+    OR(
+        // Closed / Resolved overdue
+        AND(
+            Fact_IT_Requests[Status] IN { "Resolved", "Closed" },
+            Fact_IT_Requests[ResolvedDate] > Fact_IT_Requests[SLADeadline]
+        ),
+        // Active / Open overdue
+        AND(
+            Fact_IT_Requests[Status] IN { "New", "Pending Approval", "Approved", "In Progress" },
+            NOW() > Fact_IT_Requests[SLADeadline]
+        )
+    )
+)
+
+SLA Compliance Rate % = 
+DIVIDE(
+    [SLA Met Tickets],
+    [Resolved Tickets],
+    0
+)
+
+SLA Breach Rate % = 
+1 - [SLA Compliance Rate %]
+
+
+// -------------------------------------------------------------------
+// 3. RESOLUTION TIME & QUALITY (MTTR & CSAT)
+// -------------------------------------------------------------------
+
+MTTR (Hours) = 
+AVERAGEX(
+    FILTER(
+        Fact_IT_Requests,
+        Fact_IT_Requests[Status] IN { "Resolved", "Closed" } &&
+        NOT(ISBLANK(Fact_IT_Requests[ResolvedDate]))
+    ),
+    DATEDIFF(Fact_IT_Requests[CreatedDate], Fact_IT_Requests[ResolvedDate], MINUTE) / 60.0
+)
+
+Average CSAT Score = 
+CALCULATE(
+    AVERAGE(Fact_IT_Requests[CSATScore]),
+    NOT(ISBLANK(Fact_IT_Requests[CSATScore]))
+)
+
+CSAT Positive % = 
+DIVIDE(
+    CALCULATE([Total Tickets], Fact_IT_Requests[CSATScore] >= 4),
+    CALCULATE([Total Tickets], NOT(ISBLANK(Fact_IT_Requests[CSATScore]))),
+    0
+)
+
+
+// -------------------------------------------------------------------
+// 4. TIME INTELLIGENCE & MOM GROWTH
+// -------------------------------------------------------------------
+
+Tickets Last Month = 
+CALCULATE(
+    [Total Tickets],
+    DATEADD(Dim_Date[Date], -1, MONTH)
+)
+
+Ticket MoM Growth % = 
+DIVIDE(
+    [Total Tickets] - [Tickets Last Month],
+    [Tickets Last Month],
+    0
+)
+
+SLA Compliance Last Month % = 
+CALCULATE(
+    [SLA Compliance Rate %],
+    DATEADD(Dim_Date[Date], -1, MONTH)
+)
